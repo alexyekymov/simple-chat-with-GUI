@@ -1,0 +1,6 @@
+# folder
+.idea/*
+target/*
+
+# files
+*.class
