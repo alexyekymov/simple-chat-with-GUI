@@ -30,6 +30,25 @@ public class Server {
         }
     }
 
+    private String serverHandshake(Connection connection) throws IOException, ClassNotFoundException {
+        Message reqMessage = new Message(MessageType.NAME_REQUEST);
+        while (true) {
+            connection.send(reqMessage);
+            Message recMessage = connection.receive();
+            String username = recMessage.getData();
+            if (recMessage.getType() != MessageType.USER_NAME) {
+                if (username.isEmpty()) {
+                    connection.send(new Message(MessageType.TEXT, "Имя не может быть пустым. Повторите попытку снова:"));
+                } else if (connectionMap.containsKey(username)) {
+                    connection.send(new Message(MessageType.TEXT, "Имя '" + username + "' уже используется другим пользователем. Введите другое имя:"));
+                } else {
+                    connection.send(new Message(MessageType.NAME_ACCEPTED, "Вы вошли в чат как '" + username + "'. Добро пожаловать!"));
+                    return recMessage.getData();
+                }
+            }
+        }
+    }
+
     public static void sendBroadcastMessage(Message message) {
         connectionMap.forEach((k, v) -> {
             try {
