@@ -28,22 +28,30 @@ public class Server {
         public Handler(Socket socket) {
             this.socket = socket;
         }
-    }
 
-    private String serverHandshake(Connection connection) throws IOException, ClassNotFoundException {
-        Message reqMessage = new Message(MessageType.NAME_REQUEST);
-        while (true) {
-            connection.send(reqMessage);
-            Message recMessage = connection.receive();
-            String username = recMessage.getData();
-            if (recMessage.getType() != MessageType.USER_NAME) {
-                if (username.isEmpty()) {
-                    connection.send(new Message(MessageType.TEXT, "Имя не может быть пустым. Повторите попытку снова:"));
-                } else if (connectionMap.containsKey(username)) {
-                    connection.send(new Message(MessageType.TEXT, "Имя '" + username + "' уже используется другим пользователем. Введите другое имя:"));
-                } else {
-                    connection.send(new Message(MessageType.NAME_ACCEPTED, "Вы вошли в чат как '" + username + "'. Добро пожаловать!"));
-                    return recMessage.getData();
+        private String serverHandshake(Connection connection) throws IOException, ClassNotFoundException {
+            Message reqMessage = new Message(MessageType.NAME_REQUEST);
+            while (true) {
+                connection.send(reqMessage);
+                Message recMessage = connection.receive();
+                String userName = recMessage.getData();
+                if (recMessage.getType() != MessageType.USER_NAME) {
+                    if (userName.isEmpty()) {
+                        connection.send(new Message(MessageType.TEXT, "Имя не может быть пустым. Повторите попытку снова:"));
+                    } else if (connectionMap.containsKey(userName)) {
+                        connection.send(new Message(MessageType.TEXT, "Имя '" + userName + "' уже используется другим пользователем. Введите другое имя:"));
+                    } else {
+                        connection.send(new Message(MessageType.NAME_ACCEPTED, "Вы вошли в чат как '" + userName + "'. Добро пожаловать!"));
+                        return recMessage.getData();
+                    }
+                }
+            }
+        }
+
+        private void notifyUsers(Connection connection, String userName) throws IOException {
+            for (String name : connectionMap.keySet()) {
+                if (!name.equalsIgnoreCase(userName)) {
+                    connection.send(new Message(MessageType.USER_ADDED, name));
                 }
             }
         }
