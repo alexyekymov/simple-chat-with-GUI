@@ -11,6 +11,39 @@ public class Client {
     protected Connection connection;
     private volatile boolean clientConnected = false;
 
+    public static void main(String[] args) {
+        Client client = new Client();
+        client.run();
+    }
+
+    public void run() {
+        SocketThread thread = getSocketThread();
+        thread.setDaemon(true);
+        thread.start();
+
+        synchronized (this) {
+            try {
+                this.wait();
+            } catch (InterruptedException e) {
+                ConsoleHelper.writeMessage("Ошибка во время ожидания.");
+            }
+        }
+        if (clientConnected) {
+            ConsoleHelper.writeMessage("Соединение установлено. Для выхода введите команду 'exit'.");
+        } else {
+            ConsoleHelper.writeMessage("Произошла ошибка во время работы клиента.");
+        }
+        while (clientConnected) {
+            String message = ConsoleHelper.readMessage();
+            if (message.equalsIgnoreCase("exit")) {
+                clientConnected = false;
+            }
+            if (shouldSendTextFromConsole()) {
+                sendTextMessage(message);
+            }
+        }
+    }
+
     protected String getServerAddress() {
         ConsoleHelper.writeMessage("Введите адрес сервера:");
         return ConsoleHelper.readMessage();
