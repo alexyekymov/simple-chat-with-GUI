@@ -6,6 +6,7 @@ import com.alex.Message;
 import com.alex.MessageType;
 
 import java.io.IOException;
+import java.net.Socket;
 
 public class Client {
     protected Connection connection;
@@ -78,6 +79,19 @@ public class Client {
     }
 
     public class SocketThread extends Thread {
+        @Override
+        public void run() {
+            String address = getServerAddress();
+            int port = getServerPort();
+            try {
+                Socket socket = new Socket(address, port);
+                connection = new Connection(socket);
+                clientHandshake();
+                clientMainLoop();
+            } catch (IOException | ClassNotFoundException e) {
+                notifyConnectionStatusChanged(false);
+            }
+        }
 
         protected void processIncomingMessage(String message) {
             ConsoleHelper.writeMessage(message);
@@ -107,8 +121,11 @@ public class Client {
                     Message newMessage = new Message(MessageType.USER_NAME, userName);
                     connection.send(newMessage);
                 } else if (messageType == MessageType.NAME_ACCEPTED) {
+                    ConsoleHelper.writeMessage(message.getData());
                     notifyConnectionStatusChanged(true);
                     break;
+                } else if (messageType == MessageType.TEXT) {
+                    ConsoleHelper.writeMessage(message.getData());
                 } else {
                     throw new IOException("Unexpected MessageType");
                 }
