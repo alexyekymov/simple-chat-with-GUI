@@ -10,6 +10,7 @@ public class Server {
     private static Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
+        ConsoleHelper.writeMessage("Введите порт:");
         int port = ConsoleHelper.readInt();
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -36,7 +37,7 @@ public class Server {
             try (Connection connection = new Connection(socket)) {
                 userName = serverHandshake(connection);
                 notifyUsers(connection, userName);
-                sendBroadcastMessage(new Message(MessageType.USER_ADDED, userName + "присоединился к чату."));
+                sendBroadcastMessage(new Message(MessageType.USER_ADDED, userName));
                 serverMainLoop(connection, userName);
             } catch (IOException | ClassNotFoundException e) {
                 ConsoleHelper.writeMessage("Произошла ошибка при обмене данными с удаленным адресом: " +
@@ -70,14 +71,15 @@ public class Server {
                 connection.send(reqMessage);
                 Message recMessage = connection.receive();
                 String userName = recMessage.getData();
-                if (recMessage.getType() != MessageType.USER_NAME) {
+                if (recMessage.getType() == MessageType.USER_NAME) {
                     if (userName.isEmpty()) {
-                        connection.send(new Message(MessageType.TEXT, "Имя не может быть пустым. Повторите попытку снова:"));
+                        connection.send(new Message(MessageType.TEXT, "Имя не может быть пустым."));
                     } else if (connectionMap.containsKey(userName)) {
-                        connection.send(new Message(MessageType.TEXT, "Имя '" + userName + "' уже используется другим пользователем. Введите другое имя:"));
+                        connection.send(new Message(MessageType.TEXT, "Имя '" + userName + "' уже используется другим пользователем."));
                     } else {
                         connection.send(new Message(MessageType.NAME_ACCEPTED, "Вы вошли в чат как '" + userName + "'. Добро пожаловать!"));
-                        return recMessage.getData();
+                        connectionMap.put(userName, connection);
+                        return userName;
                     }
                 }
             }
