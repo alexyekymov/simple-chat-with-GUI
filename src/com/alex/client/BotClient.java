@@ -44,7 +44,7 @@ public class BotClient extends Client {
                 Map<String, String> map = new TreeMap<>();
                 map.put("дата", "d.MM.yyyy");
                 map.put("день", "d");
-                map.put("месяц", "MMMM");
+                map.put("месяц", "LLLL");
                 map.put("год", "yyyy");
                 map.put("время", "H:mm:ss");
                 map.put("час", "H");
